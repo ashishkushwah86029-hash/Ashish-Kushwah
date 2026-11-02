@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles (to display owner / student info)
+      allow read: if isAuthenticated();
+      // Users can only create or update their own profile
+      allow create, update: if isOwner(userId);
+      allow delete: if false; // Profiles cannot be directly deleted by clients
+    }
+
+    // Rooms collection
+    match /rooms/{roomId} {
+      // Anyone can read active room listings
+      allow read: if true;
+      // Only authenticated users with OWNER role can create rooms
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      // Only the listing owner can update or delete their room
+      allow update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Bookings collection
+    match /bookings/{bookingId} {
+      // Both the student who requested and the room owner can view the booking
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        resource.data.ownerId == request.auth.uid
+      );
+      // Student can create booking request
+      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid;
+      // Owner can update status (Accept/Reject), student can cancel
+      allow update: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.studentId == request.auth.uid
+      );
+      allow delete: if false;
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">RoomSaathi</string>
+    <string name="tagline">Your Room, Your Comfort, Your Saathi.</string>
+    <string name="role_owner_title">Continue as Room Owner</string>
+    <string name="role_owner_desc">List your rooms &amp; hostels, manage tenants, review booking requests and track rent effortlessly.</string>
+    <string name="role_student_title">Continue as Student</string>
+    <string name="role_student_desc">Discover verified rooms, PGs &amp; hostels near your college with honest reviews and zero brokerage.</string>
+</resources>
